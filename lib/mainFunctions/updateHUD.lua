@@ -1,0 +1,263 @@
+-- ================================================================
+-- Update HUD - Interface de Atualização via GitHub
+-- ================================================================
+-- VERSION v1.0.0 - Update HUD System
+--    --- DRY Principle
+--    --- Single Responsibility Principle
+
+-- DESCRIÇÃO:
+-- Sistema responsável por criar uma HUD simples com callback
+-- para validar e buscar atualizações no GitHub
+
+-- FUNCIONALIDADES:
+-- ✅ HUD visual para verificação de atualizações
+-- ✅ Callback para buscar updates no GitHub
+-- ✅ Feedback visual do status de atualização
+-- ✅ Posicionamento arrastável
+
+-- ================================================================
+-- VARIÁVEIS GLOBAIS
+-- ================================================================
+
+local Engine = rawget(_G or {}, "Engine")
+local HUD = rawget(_G or {}, "HUD")
+local Game = rawget(_G or {}, "Game")
+local Client = rawget(_G or {}, "Client")
+local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
+
+local updateHUD = nil
+local updateHUDText = nil
+local isChecking = false
+
+-- ================================================================
+-- CONFIGURAÇÕES
+-- ================================================================
+
+local HUD_CONFIG = {
+    ICON_ID = 34154,  -- ID do ícone (pode ser ajustado)
+    X_POSITION = 100,
+    Y_POSITION = 100,
+    FONT_SIZE = 10,
+    TEXT_COLOR = { r = 255, g = 255, b = 255 },
+    UPDATE_TEXT = "Atualizar",
+    CHECKING_TEXT = "Verificando...",
+    UPDATED_TEXT = "Atualizado!",
+    ERROR_TEXT = "Erro!"
+}
+
+-- ================================================================
+-- FUNÇÕES AUXILIARES
+-- ================================================================
+
+-- Complexidade: O(1) - operação de I/O
+-- Salva a posição do HUD
+local function saveHUDPosition(x, y)
+    local configPath = BASE_PATH .. "/config/updateHUD_position.json"
+    
+    -- Cria diretório se não existir
+    local configDir = BASE_PATH .. "/config"
+    local dirFile = io.open(configDir, "r")
+    if not dirFile then
+        -- Tenta criar diretório (pode não funcionar em todos os sistemas)
+        os.execute('mkdir "' .. configDir .. '" 2>nul')
+    else
+        dirFile:close()
+    end
+    
+    local config = {
+        x = x,
+        y = y
+    }
+    
+    if _G.saveJSONFile then
+        _G.saveJSONFile(config, configPath)
+    else
+        -- Fallback: salva em formato simples
+        local file = io.open(configPath, "w")
+        if file then
+            file:write('{"x":' .. x .. ',"y":' .. y .. '}')
+            file:close()
+        end
+    end
+end
+
+-- Complexidade: O(1) - operação de I/O
+-- Carrega a posição salva do HUD
+local function loadHUDPosition()
+    local configPath = BASE_PATH .. "/config/updateHUD_position.json"
+    
+    if _G.loadJSONFile then
+        local config = _G.loadJSONFile(configPath)
+        if config and config.x and config.y then
+            return config.x, config.y
+        end
+    else
+        -- Fallback: tenta ler arquivo simples
+        local file = io.open(configPath, "r")
+        if file then
+            local content = file:read("*all")
+            file:close()
+            local x = content:match('"x":(%d+)')
+            local y = content:match('"y":(%d+)')
+            if x and y then
+                return tonumber(x), tonumber(y)
+            end
+        end
+    end
+    
+    return HUD_CONFIG.X_POSITION, HUD_CONFIG.Y_POSITION
+end
+
+-- Complexidade: O(1) - operação de atualização de texto
+-- Atualiza o texto do HUD
+local function updateHUDText(text, color)
+    if updateHUDText then
+        updateHUDText:setText(text)
+        if color then
+            updateHUDText:setColor(color.r, color.g, color.b)
+        end
+    end
+end
+
+-- ================================================================
+-- FUNÇÃO DE CALLBACK PARA BUSCAR ATUALIZAÇÕES
+-- ================================================================
+
+-- Complexidade: O(n) onde n = número de arquivos a verificar
+-- Callback chamado quando o HUD é clicado para buscar atualizações
+local function checkForUpdates()
+    if isChecking then
+        print("[UPDATE_HUD] Verificação já em andamento...")
+        return
+    end
+    
+    isChecking = true
+    updateHUDText:setText(HUD_CONFIG.CHECKING_TEXT)
+    updateHUDText:setColor(255, 255, 0)  -- Amarelo
+    
+    print("[UPDATE_HUD] Iniciando verificação de atualizações...")
+    
+    -- Verifica se as funções do gitLoader estão disponíveis
+    if not _G.checkFileVersion or not _G.updateFileFromGitHub then
+        print("[UPDATE_HUD] ERRO: Funções do gitLoader não estão disponíveis")
+        updateHUDText:setText(HUD_CONFIG.ERROR_TEXT)
+        updateHUDText:setColor(255, 0, 0)  -- Vermelho
+        isChecking = false
+        return
+    end
+    
+    -- Lista de arquivos para verificar atualizações
+    local filesToCheck = {
+        { filePath = "main.lua", localPath = BASE_PATH .. "/main.lua" },
+        { filePath = "lib/gitLoader/gitLoader.lua", localPath = BASE_PATH .. "/lib/gitLoader/gitLoader.lua" },
+        { filePath = "lib/mainFunctions/jsonLoader.lua", localPath = BASE_PATH .. "/lib/mainFunctions/jsonLoader.lua" },
+        { filePath = "lib/mainFunctions/updateHUD.lua", localPath = BASE_PATH .. "/lib/mainFunctions/updateHUD.lua" }
+    }
+    
+    local hasUpdates = false
+    local updatedFiles = 0
+    
+    -- Verifica cada arquivo
+    for _, fileInfo in ipairs(filesToCheck) do
+        if _G.hasUpdateAvailable then
+            if _G.hasUpdateAvailable(fileInfo.filePath, fileInfo.localPath) then
+                hasUpdates = true
+                print("[UPDATE_HUD] Atualização disponível para: " .. fileInfo.filePath)
+                
+                -- Atualiza o arquivo
+                if _G.updateFileFromGitHub(fileInfo.filePath, fileInfo.localPath) then
+                    updatedFiles = updatedFiles + 1
+                    print("[UPDATE_HUD] Arquivo atualizado: " .. fileInfo.filePath)
+                end
+            end
+        end
+    end
+    
+    -- Atualiza feedback visual
+    if hasUpdates and updatedFiles > 0 then
+        updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
+        updateHUDText:setColor(0, 255, 0)  -- Verde
+        print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
+        
+        -- Restaura texto original após 3 segundos
+        Timer.add(function()
+            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+        end, 3000)
+    else
+        updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+        updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+        print("[UPDATE_HUD] Nenhuma atualização disponível")
+    end
+    
+    isChecking = false
+end
+
+-- ================================================================
+-- FUNÇÃO PRINCIPAL DE CRIAÇÃO DO HUD
+-- ================================================================
+
+-- Complexidade: O(1) - criação de elementos HUD
+-- Cria a HUD de atualização
+-- @param x (number|nil) - Posição X (opcional)
+-- @param y (number|nil) - Posição Y (opcional)
+-- @return (table) - Tabela com referências aos elementos HUD criados
+function createUpdateHUD(x, y)
+    if updateHUD then
+        print("[UPDATE_HUD] HUD já existe, retornando instância existente")
+        return { icon = updateHUD, text = updateHUDText }
+    end
+    
+    -- Carrega posição salva ou usa valores padrão
+    local hudX, hudY = loadHUDPosition()
+    if x then hudX = x end
+    if y then hudY = y end
+    
+    -- Cria ícone HUD
+    updateHUD = HUD(hudX, hudY, HUD_CONFIG.ICON_ID, true)
+    if not updateHUD then
+        print("[UPDATE_HUD] ERRO: Não foi possível criar o ícone HUD")
+        return nil
+    end
+    
+    -- Define callback para o ícone
+    updateHUD.callback = checkForUpdates
+    
+    -- Cria texto HUD
+    updateHUDText = HUD(hudX, hudY + 30, HUD_CONFIG.UPDATE_TEXT, true)
+    if not updateHUDText then
+        print("[UPDATE_HUD] ERRO: Não foi possível criar o texto HUD")
+        return nil
+    end
+    
+    updateHUDText:setFontSize(HUD_CONFIG.FONT_SIZE)
+    updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+    updateHUDText.callback = checkForUpdates
+    
+    -- Registra evento de arrastar para salvar posição
+    if Game and Game.registerEvent then
+        -- Usa evento de drag se disponível
+        local function onHUDDrag(id, x, y)
+            if id == updateHUD:getId() or (updateHUDText and id == updateHUDText:getId()) then
+                -- Atualiza posição do outro elemento
+                if id == updateHUD:getId() then
+                    updateHUDText:setPos(x, y + 30)
+                else
+                    updateHUD:setPos(x, y - 30)
+                end
+                saveHUDPosition(x, y)
+            end
+        end
+        
+        -- Tenta registrar evento de drag (pode não estar disponível em todas as versões)
+        if Game.Events and Game.Events.HUD_DRAG then
+            Game.registerEvent(Game.Events.HUD_DRAG, onHUDDrag)
+        end
+    end
+    
+    print("[UPDATE_HUD] HUD criada com sucesso em (" .. hudX .. ", " .. hudY .. ")")
+    return { icon = updateHUD, text = updateHUDText }
+end
+
+print("[UPDATE_HUD] Módulo carregado com sucesso")
+

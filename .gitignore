@@ -1,0 +1,20 @@
+# Arquivos de backup
+*.backup
+*.version
+
+# Arquivos de configuração local
+config/*.json
+!config/example_*.json
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
