@@ -34,7 +34,9 @@ local GITHUB_CONFIG = {
 
 local Engine = rawget(_G or {}, "Engine")
 local JSON = rawget(_G or {}, "JSON")
+local Logger = rawget(_G or {}, "Logger")
 local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
+local MODULE_NAME = "GIT_LOADER"
 
 -- Tenta carregar dependências HTTP
 local http, ltn12
@@ -92,7 +94,11 @@ end
 -- @return (string|nil) - SHA do arquivo (versão) ou nil em caso de erro
 function checkFileVersion(filePath)
     if not http or not ltn12 or not JSON then
-        print("[GIT_LOADER] AVISO: Dependências HTTP não disponíveis. Modo offline.")
+        if Logger then
+            Logger.warning(MODULE_NAME, "Dependências HTTP não disponíveis. Modo offline.")
+        else
+            print("[GIT_LOADER] AVISO: Dependências HTTP não disponíveis. Modo offline.")
+        end
         return nil
     end
     
@@ -114,7 +120,11 @@ function checkFileVersion(filePath)
     end)
     
     if not success or not status_code or status_code ~= 200 then
-        print("[GIT_LOADER] Erro ao verificar versão de " .. filePath .. ". Código HTTP: " .. tostring(status_code or "desconhecido"))
+        if Logger then
+            Logger.error(MODULE_NAME, "Erro ao verificar versão de %s. Código HTTP: %s", filePath, tostring(status_code or "desconhecido"))
+        else
+            print("[GIT_LOADER] Erro ao verificar versão de " .. filePath .. ". Código HTTP: " .. tostring(status_code or "desconhecido"))
+        end
         return nil
     end
     
@@ -135,7 +145,11 @@ end
 -- @return (boolean) - true se atualizado com sucesso, false caso contrário
 function updateFileFromGitHub(filePath, localPath)
     if not http or not ltn12 then
-        print("[GIT_LOADER] AVISO: Dependências HTTP não disponíveis. Modo offline.")
+        if Logger then
+            Logger.warning(MODULE_NAME, "Dependências HTTP não disponíveis. Modo offline.")
+        else
+            print("[GIT_LOADER] AVISO: Dependências HTTP não disponíveis. Modo offline.")
+        end
         return false
     end
     
@@ -161,7 +175,11 @@ function updateFileFromGitHub(filePath, localPath)
     end)
     
     if not success or not status_code or status_code ~= 200 then
-        print("[GIT_LOADER] Erro ao baixar " .. filePath .. ". Código HTTP: " .. tostring(status_code or "desconhecido"))
+        if Logger then
+            Logger.error(MODULE_NAME, "Erro ao baixar %s. Código HTTP: %s", filePath, tostring(status_code or "desconhecido"))
+        else
+            print("[GIT_LOADER] Erro ao baixar " .. filePath .. ". Código HTTP: " .. tostring(status_code or "desconhecido"))
+        end
         return false
     end
     
@@ -173,10 +191,18 @@ function updateFileFromGitHub(filePath, localPath)
         if file then
             file:write(content)
             file:close()
-            print("[GIT_LOADER] Arquivo atualizado: " .. localPath)
+            if Logger then
+                Logger.info(MODULE_NAME, "Arquivo atualizado: %s", localPath)
+            else
+                print("[GIT_LOADER] Arquivo atualizado: " .. localPath)
+            end
             return true
         else
-            print("[GIT_LOADER] Erro ao salvar arquivo: " .. localPath)
+            if Logger then
+                Logger.error(MODULE_NAME, "Erro ao salvar arquivo: %s", localPath)
+            else
+                print("[GIT_LOADER] Erro ao salvar arquivo: " .. localPath)
+            end
             return false
         end
     end
@@ -244,5 +270,9 @@ function updateMultipleFiles(fileList)
     return results
 end
 
-print("[GIT_LOADER] Módulo carregado com sucesso")
+if Logger then
+    Logger.info("GIT_LOADER", "Módulo carregado com sucesso")
+else
+    print("[GIT_LOADER] Módulo carregado com sucesso")
+end
 
