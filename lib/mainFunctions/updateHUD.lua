@@ -172,11 +172,16 @@ local function checkForUpdates()
         updateHUDText:setColor(0, 255, 0)  -- Verde
         print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
         
-        -- Restaura texto original após 3 segundos
-        Timer.add(function()
-            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-        end, 3000)
+        -- Restaura texto original após 3 segundos usando Timer
+        local timerName = "updateHUD_restoreText_" .. os.time()
+        local restoreTimer = Timer.new(timerName, function()
+            if updateHUDText then
+                updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+                updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+            end
+            -- Destroi o timer após executar uma vez
+            destroyTimer(timerName)
+        end, 3000, true)  -- 3000ms de delay, autoStart = true
     else
         updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
         updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
