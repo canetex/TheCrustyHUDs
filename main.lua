@@ -63,31 +63,32 @@ local configData = nil
 local function setupPackagePaths()
     local pathsBaseDir = Engine.getScriptsDirectory()
     
-    -- Detecta versão do cliente (13 ou 14+)
-    local clientVersion = "13.0"
-    if Client and Client.getVersion then
-        clientVersion = Client.getVersion() or "13.0"
-    end
-    local TIBIA_CLIENT_VERSION = tonumber(clientVersion:match("%d%d")) or 13
-    
-    local luaPaths = {}
-    local cpaths = {}
-    
-    if TIBIA_CLIENT_VERSION == 13 then
-        luaPaths = { "lua\\?.lua", "lua\\socket\\?.lua" }
-        cpaths = { "?.dll", "lua\\?.dll" }
-    else
-        luaPaths = { "64bits\\lua\\?.lua", "64bits\\lua\\socket\\?.lua" }
-        cpaths = { "64bits\\?.dll", "64bits\\lua\\?.dll" }
-    end
-    
     -- Função auxiliar para adicionar paths
-    local function addPaths(paths, base)
-        local parsedPaths = base
+    local function addPaths(paths, basePath)
+        local parsedPaths = basePath
         for _, path in ipairs(paths) do
             parsedPaths = parsedPaths .. ";" .. pathsBaseDir .. "\\dlls_lib\\" .. path
         end
         return parsedPaths
+    end
+    
+    -- Detecta versão do cliente verificando presença de Qt5Core.dll
+    -- Se existir, é cliente 13x, senão é 14x+
+    local qt, _error = io.open("Qt5Core.dll")
+    local luaPaths = {}
+    local cpaths = {}
+    
+    if qt or (_error and (_error:lower()):find("permission")) then
+        if qt then
+            qt:close()
+        end
+        -- Cliente 13x
+        luaPaths = { "lua\\?.lua", "lua\\socket\\?.lua" }
+        cpaths = { "?.dll", "lua\\?.dll" }
+    else
+        -- Cliente 14x+
+        luaPaths = { "64bits\\lua\\?.lua", "64bits\\lua\\socket\\?.lua" }
+        cpaths = { "64bits\\?.dll", "64bits\\lua\\?.dll" }
     end
     
     -- Configura package.path e package.cpath
