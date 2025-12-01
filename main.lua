@@ -55,10 +55,54 @@ local loadedModules = {}
 local configData = nil
 
 -- ================================================================
+-- CONFIGURAÇÃO DE PATHS PARA DEPENDÊNCIAS HTTP
+-- ================================================================
+
+-- Complexidade: O(n) onde n = número de paths
+-- Configura os paths do package para carregar dependências HTTP
+local function setupPackagePaths()
+    local pathsBaseDir = Engine.getScriptsDirectory()
+    
+    -- Detecta versão do cliente (13 ou 14+)
+    local clientVersion = "13.0"
+    if Client and Client.getVersion then
+        clientVersion = Client.getVersion() or "13.0"
+    end
+    local TIBIA_CLIENT_VERSION = tonumber(clientVersion:match("%d%d")) or 13
+    
+    local luaPaths = {}
+    local cpaths = {}
+    
+    if TIBIA_CLIENT_VERSION == 13 then
+        luaPaths = { "lua\\?.lua", "lua\\socket\\?.lua" }
+        cpaths = { "?.dll", "lua\\?.dll" }
+    else
+        luaPaths = { "64bits\\lua\\?.lua", "64bits\\lua\\socket\\?.lua" }
+        cpaths = { "64bits\\?.dll", "64bits\\lua\\?.dll" }
+    end
+    
+    -- Função auxiliar para adicionar paths
+    local function addPaths(paths, base)
+        local parsedPaths = base
+        for _, path in ipairs(paths) do
+            parsedPaths = parsedPaths .. ";" .. pathsBaseDir .. "\\dlls_lib\\" .. path
+        end
+        return parsedPaths
+    end
+    
+    -- Configura package.path e package.cpath
+    package.path = addPaths(luaPaths, package.path)
+    package.cpath = addPaths(cpaths, package.cpath)
+end
+
+-- ================================================================
 -- INICIALIZAÇÃO
 -- ================================================================
 
 print("\n\n[" .. SCRIPT_NAME .. " v" .. SCRIPT_VERSION .. "] Carregando...\n\n")
+
+-- Configura paths para dependências HTTP
+setupPackagePaths()
 
 -- Carrega funções principais
 local function loadMainFunctions()
