@@ -21,8 +21,8 @@
 -- ================================================================
 
 local GITHUB_CONFIG = {
-    REPO_OWNER = "USER",  -- TODO: Configurar com o nome do usuário/organização do GitHub
-    REPO_NAME = "Zerobot-TheCrustyHUD",  -- Nome do repositório
+    REPO_OWNER = "canetex",  -- Usuário/organização do GitHub
+    REPO_NAME = "TheCrustyHUDs",  -- Nome do repositório
     BRANCH = "main",  -- Branch padrão
     BASE_URL = "https://api.github.com/repos",
     RAW_URL = "https://raw.githubusercontent.com"
