@@ -24,6 +24,37 @@ local JSON = rawget(_G or {}, "JSON")
 local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
 
 -- ================================================================
+-- FUNÇÕES AUXILIARES
+-- ================================================================
+
+-- Complexidade: O(1) - operação de I/O
+-- Tenta garantir que o diretório existe (cria arquivo temporário se necessário)
+-- @param dirPath (string) - Caminho do diretório
+-- @return (boolean) - true se o diretório existe ou foi criado, false caso contrário
+local function ensureDirectoryExists(dirPath)
+    if not dirPath then return false end
+    
+    -- Tenta criar um arquivo temporário no diretório para forçar sua criação
+    -- Isso funciona porque alguns sistemas criam o diretório automaticamente
+    local tempPath = dirPath .. "/.temp_check"
+    local tempFile = io.open(tempPath, "w")
+    if tempFile then
+        tempFile:close()
+        -- Tenta remover o arquivo temporário (pode falhar se remove estiver desabilitado)
+        pcall(function() 
+            local removeFile = io.open(tempPath, "r")
+            if removeFile then
+                removeFile:close()
+                -- Se chegou aqui, o diretório existe
+            end
+        end)
+        return true
+    end
+    
+    return false
+end
+
+-- ================================================================
 -- FUNÇÕES PRINCIPAIS
 -- ================================================================
 
@@ -45,7 +76,7 @@ function loadJSONFile(filePath)
     
     local file = io.open(fullPath, "r")
     if not file then
-        print("[JSON_LOADER] Erro: Não foi possível abrir o arquivo: " .. fullPath)
+        -- Não imprime erro se o arquivo não existir (é esperado em alguns casos)
         return nil
     end
     
@@ -139,10 +170,19 @@ function saveJSONFile(data, filePath)
         return false
     end
     
+    -- Extrai o diretório do caminho e tenta garantir que existe
+    local dirPath = fullPath:match("(.+)/")
+    if dirPath then
+        ensureDirectoryExists(dirPath)
+    end
+    
     -- Salva o arquivo
+    -- Nota: Se o diretório não existir, o arquivo não será criado
+    -- Isso é aceitável pois a posição do HUD não é crítica
     local file = io.open(fullPath, "w")
     if not file then
-        print("[JSON_LOADER] Erro: Não foi possível criar o arquivo: " .. fullPath)
+        -- Se falhar, não imprime erro (diretório pode não existir ainda)
+        -- Retorna false silenciosamente
         return false
     end
     

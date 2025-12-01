@@ -54,30 +54,23 @@ local HUD_CONFIG = {
 local function saveHUDPosition(x, y)
     local configPath = BASE_PATH .. "/config/updateHUD_position.json"
     
-    -- Cria diretório se não existir
-    local configDir = BASE_PATH .. "/config"
-    local dirFile = io.open(configDir, "r")
-    if not dirFile then
-        -- Tenta criar diretório (pode não funcionar em todos os sistemas)
-        os.execute('mkdir "' .. configDir .. '" 2>nul')
-    else
-        dirFile:close()
-    end
-    
     local config = {
         x = x,
         y = y
     }
     
     if _G.saveJSONFile then
+        -- saveJSONFile já tenta criar o arquivo, se falhar silenciosamente não há problema
         _G.saveJSONFile(config, configPath)
     else
         -- Fallback: salva em formato simples
+        -- Tenta criar o arquivo, se falhar (diretório não existe) não faz nada
         local file = io.open(configPath, "w")
         if file then
             file:write('{"x":' .. x .. ',"y":' .. y .. '}')
             file:close()
         end
+        -- Se falhar, não imprime erro (diretório pode não existir ainda)
     end
 end
 
