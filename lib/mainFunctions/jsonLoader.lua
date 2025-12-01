@@ -21,7 +21,9 @@
 
 local Engine = rawget(_G or {}, "Engine")
 local JSON = rawget(_G or {}, "JSON")
+local Logger = rawget(_G or {}, "Logger")
 local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
+local MODULE_NAME = "JSON_LOADER"
 
 -- ================================================================
 -- FUNÇÕES AUXILIARES
@@ -64,7 +66,11 @@ end
 -- @return (table|nil) - Tabela com os dados do JSON ou nil em caso de erro
 function loadJSONFile(filePath)
     if not filePath then
-        print("[JSON_LOADER] Erro: Caminho do arquivo não fornecido")
+        if Logger then
+            Logger.error(MODULE_NAME, "Caminho do arquivo não fornecido")
+        else
+            print("[JSON_LOADER] Erro: Caminho do arquivo não fornecido")
+        end
         return nil
     end
     
@@ -85,7 +91,11 @@ function loadJSONFile(filePath)
     file:close()
     
     if not content or content == "" then
-        print("[JSON_LOADER] Erro: Arquivo vazio: " .. fullPath)
+        if Logger then
+            Logger.error(MODULE_NAME, "Arquivo vazio: %s", fullPath)
+        else
+            print("[JSON_LOADER] Erro: Arquivo vazio: " .. fullPath)
+        end
         return nil
     end
     
@@ -102,16 +112,28 @@ function loadJSONFile(filePath)
     end)
     
     if not success then
-        print("[JSON_LOADER] Erro ao decodificar JSON: " .. tostring(decodedData))
+        if Logger then
+            Logger.error(MODULE_NAME, "Erro ao decodificar JSON: %s", tostring(decodedData))
+        else
+            print("[JSON_LOADER] Erro ao decodificar JSON: " .. tostring(decodedData))
+        end
         return nil
     end
     
     if not decodedData then
-        print("[JSON_LOADER] Erro: Dados decodificados são nil")
+        if Logger then
+            Logger.error(MODULE_NAME, "Dados decodificados são nil")
+        else
+            print("[JSON_LOADER] Erro: Dados decodificados são nil")
+        end
         return nil
     end
     
-    print("[JSON_LOADER] Arquivo carregado com sucesso: " .. fullPath)
+    if Logger then
+        Logger.info(MODULE_NAME, "Arquivo carregado com sucesso: %s", fullPath)
+    else
+        print("[JSON_LOADER] Arquivo carregado com sucesso: " .. fullPath)
+    end
     return decodedData
 end
 
@@ -134,7 +156,11 @@ function loadJSONAsGlobals(filePath, prefix)
         _G[globalKey] = value
     end
     
-    print("[JSON_LOADER] Variáveis globais criadas a partir de: " .. filePath)
+    if Logger then
+        Logger.info(MODULE_NAME, "Variáveis globais criadas a partir de: %s", filePath)
+    else
+        print("[JSON_LOADER] Variáveis globais criadas a partir de: " .. filePath)
+    end
     return data
 end
 
@@ -145,12 +171,20 @@ end
 -- @return (boolean) - true se salvo com sucesso, false caso contrário
 function saveJSONFile(data, filePath)
     if not data then
-        print("[JSON_LOADER] Erro: Dados não fornecidos")
+        if Logger then
+            Logger.error(MODULE_NAME, "Dados não fornecidos")
+        else
+            print("[JSON_LOADER] Erro: Dados não fornecidos")
+        end
         return false
     end
     
     if not filePath then
-        print("[JSON_LOADER] Erro: Caminho do arquivo não fornecido")
+        if Logger then
+            Logger.error(MODULE_NAME, "Caminho do arquivo não fornecido")
+        else
+            print("[JSON_LOADER] Erro: Caminho do arquivo não fornecido")
+        end
         return false
     end
     
@@ -166,7 +200,11 @@ function saveJSONFile(data, filePath)
     end)
     
     if not success then
-        print("[JSON_LOADER] Erro ao codificar JSON: " .. tostring(jsonString))
+        if Logger then
+            Logger.error(MODULE_NAME, "Erro ao codificar JSON: %s", tostring(jsonString))
+        else
+            print("[JSON_LOADER] Erro ao codificar JSON: " .. tostring(jsonString))
+        end
         return false
     end
     
@@ -189,7 +227,11 @@ function saveJSONFile(data, filePath)
     file:write(jsonString)
     file:close()
     
-    print("[JSON_LOADER] Arquivo salvo com sucesso: " .. fullPath)
+    if Logger then
+        Logger.info(MODULE_NAME, "Arquivo salvo com sucesso: %s", fullPath)
+    else
+        print("[JSON_LOADER] Arquivo salvo com sucesso: " .. fullPath)
+    end
     return true
 end
 
@@ -213,5 +255,9 @@ function validateJSON(jsonString)
     return true, decodedData
 end
 
-print("[JSON_LOADER] Módulo carregado com sucesso")
+if Logger then
+    Logger.info("JSON_LOADER", "Módulo carregado com sucesso")
+else
+    print("[JSON_LOADER] Módulo carregado com sucesso")
+end
 

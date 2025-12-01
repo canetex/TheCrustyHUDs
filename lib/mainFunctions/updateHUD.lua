@@ -23,7 +23,9 @@ local Engine = rawget(_G or {}, "Engine")
 local HUD = rawget(_G or {}, "HUD")
 local Game = rawget(_G or {}, "Game")
 local Client = rawget(_G or {}, "Client")
+local Logger = rawget(_G or {}, "Logger")
 local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
+local MODULE_NAME = "UPDATE_HUD"
 
 local updateHUD = nil
 local updateHUDText = nil
@@ -120,7 +122,11 @@ end
 -- Callback chamado quando o HUD é clicado para buscar atualizações
 local function checkForUpdates()
     if isChecking then
-        print("[UPDATE_HUD] Verificação já em andamento...")
+        if Logger then
+            Logger.warning(MODULE_NAME, "Verificação já em andamento...")
+        else
+            print("[UPDATE_HUD] Verificação já em andamento...")
+        end
         return
     end
     
@@ -128,11 +134,19 @@ local function checkForUpdates()
     updateHUDText:setText(HUD_CONFIG.CHECKING_TEXT)
     updateHUDText:setColor(255, 255, 0)  -- Amarelo
     
-    print("[UPDATE_HUD] Iniciando verificação de atualizações...")
+    if Logger then
+        Logger.info(MODULE_NAME, "Iniciando verificação de atualizações...")
+    else
+        print("[UPDATE_HUD] Iniciando verificação de atualizações...")
+    end
     
     -- Verifica se as funções do gitLoader estão disponíveis
     if not _G.checkFileVersion or not _G.updateFileFromGitHub then
-        print("[UPDATE_HUD] ERRO: Funções do gitLoader não estão disponíveis")
+        if Logger then
+            Logger.error(MODULE_NAME, "Funções do gitLoader não estão disponíveis")
+        else
+            print("[UPDATE_HUD] ERRO: Funções do gitLoader não estão disponíveis")
+        end
         updateHUDText:setText(HUD_CONFIG.ERROR_TEXT)
         updateHUDText:setColor(255, 0, 0)  -- Vermelho
         isChecking = false
@@ -155,12 +169,20 @@ local function checkForUpdates()
         if _G.hasUpdateAvailable then
             if _G.hasUpdateAvailable(fileInfo.filePath, fileInfo.localPath) then
                 hasUpdates = true
-                print("[UPDATE_HUD] Atualização disponível para: " .. fileInfo.filePath)
+                if Logger then
+                    Logger.info(MODULE_NAME, "Atualização disponível para: %s", fileInfo.filePath)
+                else
+                    print("[UPDATE_HUD] Atualização disponível para: " .. fileInfo.filePath)
+                end
                 
                 -- Atualiza o arquivo
                 if _G.updateFileFromGitHub(fileInfo.filePath, fileInfo.localPath) then
                     updatedFiles = updatedFiles + 1
-                    print("[UPDATE_HUD] Arquivo atualizado: " .. fileInfo.filePath)
+                    if Logger then
+                        Logger.info(MODULE_NAME, "Arquivo atualizado: %s", fileInfo.filePath)
+                    else
+                        print("[UPDATE_HUD] Arquivo atualizado: " .. fileInfo.filePath)
+                    end
                 end
             end
         end
@@ -170,22 +192,25 @@ local function checkForUpdates()
     if hasUpdates and updatedFiles > 0 then
         updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
         updateHUDText:setColor(0, 255, 0)  -- Verde
-        print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
+        if Logger then
+            Logger.info(MODULE_NAME, "%d arquivo(s) atualizado(s) com sucesso!", updatedFiles)
+        else
+            print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
+        end
         
-        -- Restaura texto original após 3 segundos usando Timer
-        local timerName = "updateHUD_restoreText_" .. os.time()
-        local restoreTimer = Timer.new(timerName, function()
-            if updateHUDText then
-                updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-                updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-            end
-            -- Destroi o timer após executar uma vez
-            destroyTimer(timerName)
-        end, 3000, true)  -- 3000ms de delay, autoStart = true
+        -- Restaura texto original após 3 segundos
+        Timer.add(function()
+            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+        end, 3000)
     else
         updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
         updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-        print("[UPDATE_HUD] Nenhuma atualização disponível")
+        if Logger then
+            Logger.info(MODULE_NAME, "Nenhuma atualização disponível")
+        else
+            print("[UPDATE_HUD] Nenhuma atualização disponível")
+        end
     end
     
     isChecking = false
@@ -202,7 +227,11 @@ end
 -- @return (table) - Tabela com referências aos elementos HUD criados
 function createUpdateHUD(x, y)
     if updateHUD then
-        print("[UPDATE_HUD] HUD já existe, retornando instância existente")
+        if Logger then
+            Logger.debug(MODULE_NAME, "HUD já existe, retornando instância existente")
+        else
+            print("[UPDATE_HUD] HUD já existe, retornando instância existente")
+        end
         return { icon = updateHUD, text = updateHUDText }
     end
     
@@ -214,7 +243,11 @@ function createUpdateHUD(x, y)
     -- Cria ícone HUD
     updateHUD = HUD(hudX, hudY, HUD_CONFIG.ICON_ID, true)
     if not updateHUD then
-        print("[UPDATE_HUD] ERRO: Não foi possível criar o ícone HUD")
+        if Logger then
+            Logger.error(MODULE_NAME, "Não foi possível criar o ícone HUD")
+        else
+            print("[UPDATE_HUD] ERRO: Não foi possível criar o ícone HUD")
+        end
         return nil
     end
     
@@ -224,7 +257,11 @@ function createUpdateHUD(x, y)
     -- Cria texto HUD
     updateHUDText = HUD(hudX, hudY + 30, HUD_CONFIG.UPDATE_TEXT, true)
     if not updateHUDText then
-        print("[UPDATE_HUD] ERRO: Não foi possível criar o texto HUD")
+        if Logger then
+            Logger.error(MODULE_NAME, "Não foi possível criar o texto HUD")
+        else
+            print("[UPDATE_HUD] ERRO: Não foi possível criar o texto HUD")
+        end
         return nil
     end
     
@@ -253,9 +290,17 @@ function createUpdateHUD(x, y)
         end
     end
     
-    print("[UPDATE_HUD] HUD criada com sucesso em (" .. hudX .. ", " .. hudY .. ")")
+    if Logger then
+        Logger.info(MODULE_NAME, "HUD criada com sucesso em (%d, %d)", hudX, hudY)
+    else
+        print("[UPDATE_HUD] HUD criada com sucesso em (" .. hudX .. ", " .. hudY .. ")")
+    end
     return { icon = updateHUD, text = updateHUDText }
 end
 
-print("[UPDATE_HUD] Módulo carregado com sucesso")
+if Logger then
+    Logger.info("UPDATE_HUD", "Módulo carregado com sucesso")
+else
+    print("[UPDATE_HUD] Módulo carregado com sucesso")
+end
 
