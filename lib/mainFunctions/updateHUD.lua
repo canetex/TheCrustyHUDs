@@ -43,8 +43,8 @@ local HUD_CONFIG = {
     Y_POSITION = 100,
     FONT_SIZE = 10,
     TEXT_COLOR = { r = 255, g = 255, b = 255 },
-    UPDATE_TEXT = "Atualizar!!!",
-    CHECKING_TEXT = "Verificando...1",
+    UPDATE_TEXT = "Atualizar",
+    CHECKING_TEXT = "Verificando...",
     UPDATED_TEXT = "Atualizado!",
     ERROR_TEXT = "Erro!"
 }
@@ -134,7 +134,7 @@ local function checkForUpdates()
     
     isChecking = true
     updateHUDText:setText(HUD_CONFIG.CHECKING_TEXT)
-    updateHUDText:setColor(255, 255, 0)  -- Amarelo
+    updateHUDText:setColor(255, 0, 0)  -- Amarelo
     
     if Logger then
         Logger.info(MODULE_NAME, "Iniciando verificação de atualizações...")
