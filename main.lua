@@ -197,18 +197,22 @@ end
 
 -- Executa inicialização
 initialize()
+local hudTeste = nil
 
-local hudTeste = HUD.new(400,400,3108,true)
-hudTeste:setDraggable(true)
-hudTeste:setCallback(function()
+local function updateWhenDragged()
+    local newPos = hudTeste:getPos()
     if _G.updatePositionsDemoImplementation and type(_G.updatePositionsDemoImplementation) == "function" then
         _G.updatePositionsDemoImplementation({
-            small_icon = {x = 600, y = 650},
-            big_icon = {x = 450, y = 450},
-            text = {x = 450, y = 450}
+            small_icon = {x = newPos.x+40, y = newPos.y+40},
+            big_icon = {x = newPos.x+80, y = newPos.y+80},
+            text = {x = newPos.x+80, y = newPos.y+80},
         })
     end
-end)
+end
+
+hudTeste = HUD.new(400,400,3108,true)
+hudTeste:setDraggable(true)
+hudTeste:setCallback(updateWhenDragged)
 
 print("[" .. SCRIPT_NAME .. "] Carregado com sucesso!\n")
 

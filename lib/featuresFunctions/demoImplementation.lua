@@ -26,7 +26,7 @@ local JSON = rawget(_G or {}, "JSON")
 
 local icon_id = 3108
 local bg_id = 12746
-local text_value = "teste"
+local text_value = "Demo Implementation Test"
 local check_function = Engine.isMagicShooterEnabled
 local toggle_function = Engine.enableMagicShooter
 
