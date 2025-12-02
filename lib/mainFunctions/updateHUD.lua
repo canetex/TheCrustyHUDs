@@ -32,14 +32,13 @@ local MODULE_NAME = "UPDATE_HUD"
 local updateHUD = nil
 local updateHUDText = nil
 local isChecking = false
-local lastIconId = nil  -- Rastreia o último ICON_ID usado
 
 -- ================================================================
 -- CONFIGURAÇÕES
 -- ================================================================
 
 local HUD_CONFIG = {
-    ICON_ID = 34094,  -- ID do ícone (pode ser ajustado)
+    ICON_ID = 34154,  -- ID do ícone (pode ser ajustado)
     X_POSITION = 100,
     Y_POSITION = 100,
     FONT_SIZE = 10,
@@ -222,16 +221,12 @@ local function checkForUpdates()
                 
                 -- Atualiza HUD_CONFIG com os novos valores se encontrados
                 if newIconId then 
-                    local newId = tonumber(newIconId)
-                    HUD_CONFIG.ICON_ID = newId
+                    HUD_CONFIG.ICON_ID = tonumber(newIconId)
                     -- Atualiza o ícone do HUD se já existir
                     if updateHUD and updateHUD.setItemId then
                         updateHUD:setItemId(HUD_CONFIG.ICON_ID)
-                        lastIconId = HUD_CONFIG.ICON_ID  -- Atualiza o rastreamento
                         if Logger then
                             Logger.info(MODULE_NAME, "Ícone do HUD atualizado para ID: %d", HUD_CONFIG.ICON_ID)
-                        else
-                            print("[UPDATE_HUD] Ícone do HUD atualizado para ID: " .. HUD_CONFIG.ICON_ID)
                         end
                     end
                 end
@@ -351,23 +346,6 @@ end
 -- @return (table) - Tabela com referências aos elementos HUD criados
 function createUpdateHUD(x, y)
     if updateHUD then
-        -- Verifica se o ICON_ID mudou e atualiza o ícone se necessário
-        if lastIconId ~= HUD_CONFIG.ICON_ID then
-            if updateHUD.setItemId then
-                updateHUD:setItemId(HUD_CONFIG.ICON_ID)
-                lastIconId = HUD_CONFIG.ICON_ID
-                if Logger then
-                    Logger.info(MODULE_NAME, "Ícone do HUD atualizado para ID: %d", HUD_CONFIG.ICON_ID)
-                else
-                    print("[UPDATE_HUD] Ícone do HUD atualizado para ID: " .. HUD_CONFIG.ICON_ID)
-                end
-            end
-        end
-        -- Atualiza o texto também se necessário
-        if updateHUDText then
-            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-        end
         if Logger then
             Logger.debug(MODULE_NAME, "HUD já existe, retornando instância existente")
         else
@@ -391,9 +369,6 @@ function createUpdateHUD(x, y)
         end
         return nil
     end
-    
-    -- Atualiza o último ICON_ID usado
-    lastIconId = HUD_CONFIG.ICON_ID
     
     -- Define callback para o ícone
     updateHUD.callback = checkForUpdates
