@@ -26,6 +26,12 @@ local JSON = rawget(_G or {}, "JSON")
 
 local icon_id = 3108
 local bg_id = 12746
+local alarm_icon_id = 3109
+local alarm_text_value = {
+    on = "ON",
+    off = "OFF",
+}
+
 local text_value = "Demo Implementation Test"
 local check_function = Engine.isMagicShooterEnabled
 local toggle_function = Engine.enableMagicShooter
@@ -47,12 +53,14 @@ local sizes = {
 }
 
 local offScreen = 300
+local text_bg_repeats = math.max(1, math.ceil((string.len(text_value)*sizes.font_size)/sizes.natural))
 
 -- Posições padrão (podem ser sobrescritas por parâmetros)
 local default_positions = {
     small_icon = {x = offScreen, y = offScreen},
     big_icon = {x = offScreen +50, y = offScreen +50},
     text = {x = offScreen +50, y = offScreen +50},
+    alarm = {x = offScreen +(text_bg_repeats*sizes.natural), y = offScreen +50},
 }
 
 local positions = {}
@@ -64,7 +72,7 @@ local relative_offsets = {
     textbg = {x = sizes.natural * 1.2, y = 0},
 }
 
-local text_bg_repeats = math.max(1, math.ceil((string.len(text_value)*sizes.font_size)/sizes.natural))
+
 -- ================================================================
 -- Main Assets
 -- ================================================================
@@ -73,16 +81,45 @@ local huds = {
     bg_small_icon = nil,
     bg_big_icon = nil,
     bg_text = {},
+    bg_alarm = nil,
+    
     small_icon = nil,
     big_icon = nil,
     text = nil,
+    
+    alarm_icon = nil,
+    alarm_text = nil,
 }
 
 local status = check_function()
+local status_alarm = false
 
 -- ================================================================
 -- Visual Functions
 -- ================================================================
+local function toggle_style_alarm()
+    if not huds.alarm_icon or not huds.alarm_text then
+        return
+    end
+    -- Alterna o status primeiro
+    status_alarm = not status_alarm
+    
+    -- Atualiza o estilo baseado no novo status
+    if status_alarm then
+        huds.alarm_icon:setOpacity(colors.opacity.active)
+        huds.alarm_text:setColor(colors.enabled.r, colors.enabled.g, colors.enabled.b)
+        huds.alarm_text:setOpacity(colors.opacity.active)
+        huds.alarm_text:setText(alarm_text_value.on)
+    else
+        huds.alarm_icon:setOpacity(colors.opacity.inactive)
+        huds.alarm_text:setColor(colors.disabled.r, colors.disabled.g, colors.disabled.b)
+        huds.alarm_text:setOpacity(colors.opacity.inactive)
+        huds.alarm_text:setText(alarm_text_value.off)
+    end
+    huds.bg_alarm:setOpacity(colors.opacity.bg)
+    huds.bg_alarm:setSize(sizes.natural, sizes.natural)
+    huds.alarm_icon:setSize(sizes.natural, sizes.natural)
+end
 
 local function toggle_style(current_status)
     if not huds.small_icon or not huds.big_icon or not huds.text then
@@ -151,11 +188,13 @@ local function init(posParams)
         positions.small_icon = posParams.small_icon or default_positions.small_icon
         positions.big_icon = posParams.big_icon or default_positions.big_icon
         positions.text = posParams.text or default_positions.text
+        positions.alarm = posParams.alarm or default_positions.alarm
     else
         -- Usa posições padrão
         positions.small_icon = default_positions.small_icon
         positions.big_icon = default_positions.big_icon
         positions.text = default_positions.text
+        positions.alarm = default_positions.alarm
     end
     
     local function small_icon()
@@ -175,15 +214,28 @@ local function init(posParams)
         huds.text = HUD.new(positions.text.x+relative_offsets.text.x, positions.text.y+relative_offsets.text.y, text_value, true)
         huds.text.callback = mainAction
     end
-    
+    local function alarm()
+        if not positions.alarm then
+            -- Se positions.alarm não foi inicializado, usa o padrão
+            positions.alarm = default_positions.alarm
+        end
+        huds.bg_alarm = HUD.new(positions.alarm.x, positions.alarm.y, bg_id, true)
+        huds.alarm_icon = HUD.new(positions.alarm.x, positions.alarm.y, alarm_icon_id, true)
+        huds.alarm_icon.callback = toggle_style_alarm
+        local alarmTextIndex = status_alarm and "on" or "off"
+        huds.alarm_text = HUD.new(positions.alarm.x, positions.alarm.y, alarm_text_value[alarmTextIndex], true)
+        huds.alarm_text.callback = toggle_style_alarm
+    end
     -- Cria todos os HUDs primeiro
     small_icon()
     big_icon()
     text()
+    alarm()
     
     -- Aplica o estilo inicial após criar todos os HUDs
     toggle_style(status)
-    
+    toggle_style_alarm()
+
     return huds
 end
 
