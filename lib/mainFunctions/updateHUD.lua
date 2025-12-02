@@ -38,7 +38,7 @@ local isChecking = false
 -- ================================================================
 
 local HUD_CONFIG = {
-    ICON_ID = 34154,  -- ID do ícone (pode ser ajustado)
+    ICON_ID = 34094,  -- ID do ícone (pode ser ajustado)
     X_POSITION = 100,
     Y_POSITION = 100,
     FONT_SIZE = 10,
