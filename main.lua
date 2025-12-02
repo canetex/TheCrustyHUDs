@@ -145,6 +145,22 @@ local function loadGitLoader()
     end
 end
 
+-- Carrega funções de features
+local function loadFeatures()
+    local featuresPath = BASE_PATH .. "/lib/featuresFunctions"
+    
+    -- Carrega demoImplementation
+    local demoImplementationPath = featuresPath .. "/demoImplementation.lua"
+    local file = io.open(demoImplementationPath, "r")
+    if file then
+        file:close()
+        dofile(demoImplementationPath)
+        print("[" .. SCRIPT_NAME .. "] demoImplementation carregado")
+    else
+        print("[" .. SCRIPT_NAME .. "] AVISO: demoImplementation não encontrado em " .. demoImplementationPath)
+    end
+end
+
 -- ================================================================
 -- FUNÇÃO PRINCIPAL DE CARREGAMENTO
 -- ================================================================
@@ -156,9 +172,24 @@ local function initialize()
     -- Carrega sistema de atualização do GitHub
     loadGitLoader()
     
+    -- Carrega funções de features
+    loadFeatures()
+    
     -- Inicializa HUD de atualização se a função existir
     if _G.createUpdateHUD and type(_G.createUpdateHUD) == "function" then
         _G.createUpdateHUD()
+    end
+    
+    -- Inicializa demo implementation se a função existir
+    if _G.initDemoImplementation and type(_G.initDemoImplementation) == "function" then
+        -- Define posições customizadas (opcional - pode ser nil para usar padrão)
+        local demoPositions = {
+            small_icon = {x = 300, y = 300},
+            big_icon = {x = 350, y = 350},
+            text = {x = 350, y = 350}
+        }
+        _G.initDemoImplementation(demoPositions)
+        print("[" .. SCRIPT_NAME .. "] demoImplementation inicializado")
     end
     
     print("[" .. SCRIPT_NAME .. "] Inicialização concluída!\n")
