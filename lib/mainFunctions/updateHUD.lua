@@ -256,7 +256,24 @@ local function checkForUpdates()
             -- Usa Timer para recarregar após 1 segundo (permite que as atualizações terminem)
             local reloadTimerName = "updateHUD_reloadScript_" .. os.time()
             Timer.new(reloadTimerName, function()
-                local scriptName = "_TheCrustyHUD 2.0/main.lua"
+                -- Tenta obter o nome do script atual usando debug.getinfo
+                local scriptName = nil
+                local success_getinfo, info = pcall(function()
+                    return debug.getinfo(2, 'S')
+                end)
+                
+                if success_getinfo and info and info.source then
+                    -- Remove o prefixo "@" e "Scripts/" do caminho
+                    scriptName = info.source:gsub("^@", ""):gsub("^Scripts/", "")
+                else
+                    -- Fallback: usa o caminho relativo conhecido
+                    scriptName = "_TheCrustyHUD 2.0/main.lua"
+                end
+                
+                if Logger then
+                    Logger.info(MODULE_NAME, "Tentando recarregar script: %s", scriptName)
+                end
+                
                 local success = Engine.reloadScript(scriptName)
                 if success then
                     if Logger then
