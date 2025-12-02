@@ -107,7 +107,7 @@ end
 
 -- Complexidade: O(1) - operação de atualização de texto
 -- Atualiza o texto do HUD
-local function updateHUDText(text, color)
+local function updateHUDTextDisplay(text, color)
     if updateHUDText then
         updateHUDText:setText(text)
         if color then
@@ -133,8 +133,10 @@ local function checkForUpdates()
     end
     
     isChecking = true
-    updateHUDText:setText(HUD_CONFIG.CHECKING_TEXT)
-    updateHUDText:setColor(255, 0, 0)  -- Amarelo
+    if updateHUDText then
+        updateHUDText:setText(HUD_CONFIG.CHECKING_TEXT)
+        updateHUDText:setColor(255, 255, 0)  -- Amarelo
+    end
     
     if Logger then
         Logger.info(MODULE_NAME, "Iniciando verificação de atualizações...")
@@ -192,8 +194,10 @@ local function checkForUpdates()
     
     -- Atualiza feedback visual
     if hasUpdates and updatedFiles > 0 then
-        updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
-        updateHUDText:setColor(0, 255, 0)  -- Verde
+        if updateHUDText then
+            updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
+            updateHUDText:setColor(0, 255, 0)  -- Verde
+        end
         if Logger then
             Logger.info(MODULE_NAME, "%d arquivo(s) atualizado(s) com sucesso!", updatedFiles)
         else
@@ -211,8 +215,10 @@ local function checkForUpdates()
             destroyTimer(timerName)
         end, 3000, true)  -- 3000ms de delay, autoStart = true
     else
-        updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-        updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+        if updateHUDText then
+            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+        end
         if Logger then
             Logger.info(MODULE_NAME, "Nenhuma atualização disponível")
         else
