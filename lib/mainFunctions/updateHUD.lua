@@ -43,10 +43,10 @@ local HUD_CONFIG = {
     Y_POSITION = 100,
     FONT_SIZE = 10,
     TEXT_COLOR = { r = 255, g = 255, b = 255 },
-    UPDATE_TEXT = "Atualizar -- 123",
-    CHECKING_TEXT = "Verificando... --312",
-    UPDATED_TEXT = "Atualizado! -- 31222",
-    ERROR_TEXT = "Erro! -- 11"
+    UPDATE_TEXT = "Atualizar",
+    CHECKING_TEXT = "Verificando...",
+    UPDATED_TEXT = "Atualizado!",
+    ERROR_TEXT = "Erro!"
 }
 
 -- ================================================================
@@ -194,38 +194,6 @@ local function checkForUpdates()
     
     -- Atualiza feedback visual
     if hasUpdates and updatedFiles > 0 then
-        -- Recarrega a configuração do arquivo atualizado se o próprio updateHUD.lua foi atualizado
-        local updateHUDWasUpdated = false
-        for _, fileInfo in ipairs(filesToCheck) do
-            if fileInfo.filePath == "lib/mainFunctions/updateHUD.lua" then
-                updateHUDWasUpdated = true
-                break
-            end
-        end
-        
-        -- Se o updateHUD.lua foi atualizado, recarrega a configuração
-        if updateHUDWasUpdated then
-            -- Recarrega o arquivo para obter os novos valores de HUD_CONFIG
-            local updateHUDPath = BASE_PATH .. "/lib/mainFunctions/updateHUD.lua"
-            local file = io.open(updateHUDPath, "r")
-            if file then
-                local content = file:read("*all")
-                file:close()
-                
-                -- Extrai os valores atualizados de HUD_CONFIG usando pattern matching
-                local updatedText = content:match('UPDATED_TEXT%s*=%s*"([^"]+)"')
-                local updateText = content:match('UPDATE_TEXT%s*=%s*"([^"]+)"')
-                local checkingText = content:match('CHECKING_TEXT%s*=%s*"([^"]+)"')
-                local errorText = content:match('ERROR_TEXT%s*=%s*"([^"]+)"')
-                
-                -- Atualiza HUD_CONFIG com os novos valores se encontrados
-                if updatedText then HUD_CONFIG.UPDATED_TEXT = updatedText end
-                if updateText then HUD_CONFIG.UPDATE_TEXT = updateText end
-                if checkingText then HUD_CONFIG.CHECKING_TEXT = checkingText end
-                if errorText then HUD_CONFIG.ERROR_TEXT = errorText end
-            end
-        end
-        
         if updateHUDText then
             updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
             updateHUDText:setColor(0, 255, 0)  -- Verde
@@ -234,71 +202,6 @@ local function checkForUpdates()
             Logger.info(MODULE_NAME, "%d arquivo(s) atualizado(s) com sucesso!", updatedFiles)
         else
             print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
-        end
-        
-        -- Verifica se o main.lua foi atualizado para recarregar o script
-        local mainWasUpdated = false
-        for _, fileInfo in ipairs(filesToCheck) do
-            if fileInfo.filePath == "main.lua" then
-                mainWasUpdated = true
-                break
-            end
-        end
-        
-        -- Se o main.lua foi atualizado, recarrega o script após um pequeno delay
-        if mainWasUpdated and Engine and Engine.reloadScript then
-            if Logger then
-                Logger.info(MODULE_NAME, "Recarregando script após atualização do main.lua...")
-            else
-                print("[UPDATE_HUD] Recarregando script após atualização do main.lua...")
-            end
-            
-            -- Usa Timer para recarregar após 1 segundo (permite que as atualizações terminem)
-            local reloadTimerName = "updateHUD_reloadScript_" .. os.time()
-            
-            -- Obtém o nome do script atual antes de criar o timer
-            local scriptName = nil
-            local success_getinfo, info = pcall(function()
-                -- Tenta obter de diferentes níveis da stack
-                for level = 1, 5 do
-                    local frameInfo = debug.getinfo(level, 'S')
-                    if frameInfo and frameInfo.source then
-                        local source = frameInfo.source
-                        -- Procura pelo caminho do main.lua
-                        if source:match("_TheCrustyHUD 2.0/main.lua") or source:match("main%.lua") then
-                            scriptName = source:gsub("^@", ""):gsub("^Scripts/", "")
-                            break
-                        end
-                    end
-                end
-            end)
-            
-            -- Fallback: usa o caminho relativo conhecido
-            if not scriptName then
-                scriptName = "_TheCrustyHUD 2.0/main.lua"
-            end
-            
-            Timer.new(reloadTimerName, function()
-                if Logger then
-                    Logger.info(MODULE_NAME, "Tentando recarregar script: %s", scriptName)
-                end
-                
-                local success = Engine.reloadScript(scriptName)
-                if success then
-                    if Logger then
-                        Logger.info(MODULE_NAME, "Script recarregado com sucesso!")
-                    else
-                        print("[UPDATE_HUD] Script recarregado com sucesso!")
-                    end
-                else
-                    if Logger then
-                        Logger.warning(MODULE_NAME, "Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
-                    else
-                        print("[UPDATE_HUD] AVISO: Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
-                    end
-                end
-                destroyTimer(reloadTimerName)
-            end, 1000, true)  -- 1 segundo de delay, autoStart = true
         end
         
         -- Restaura texto original após 3 segundos usando Timer
