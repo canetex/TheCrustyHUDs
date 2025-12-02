@@ -60,7 +60,7 @@ local default_positions = {
     small_icon = {x = offScreen, y = offScreen},
     big_icon = {x = offScreen +50, y = offScreen +50},
     text = {x = offScreen +50, y = offScreen +50},
-    alarm = {x = offScreen +(text_bg_repeats*sizes.natural), y = offScreen +50},
+    alarm = {x = offScreen +50 +((text_bg_repeats+1)*sizes.natural), y = offScreen +50},
 }
 
 local positions = {}
@@ -70,6 +70,7 @@ local relative_offsets = {
     big_icon = {x = 50, y = 50},
     text = {x = sizes.natural * 1.4, y = sizes.natural*0.2},
     textbg = {x = sizes.natural * 1.2, y = 0},
+    alarm_text = {x = 0, y = 0},
 }
 
 
@@ -252,6 +253,7 @@ end
 --   - small_icon: {x = number, y = number}
 --   - big_icon: {x = number, y = number}
 --   - text: {x = number, y = number}
+--   - alarm: {x = number, y = number}
 local function updatePositions(posParams)
     if not posParams then
         return
@@ -266,6 +268,9 @@ local function updatePositions(posParams)
     end
     if posParams.text then
         positions.text = posParams.text
+    end
+    if posParams.alarm then
+        positions.alarm = posParams.alarm
     end
     
     -- Reposiciona os HUDs existentes
@@ -298,6 +303,20 @@ local function updatePositions(posParams)
                     positions.text.y + relative_offsets.textbg.y
                 )
             end
+        end
+    end
+    
+    -- Reposiciona o alarme
+    if huds.alarm_icon and positions.alarm then
+        huds.alarm_icon:setPos(positions.alarm.x, positions.alarm.y)
+        if huds.bg_alarm then
+            huds.bg_alarm:setPos(positions.alarm.x, positions.alarm.y)
+        end
+        if huds.alarm_text then
+            huds.alarm_text:setPos(
+                positions.alarm.x + relative_offsets.alarm_text.x,
+                positions.alarm.y + relative_offsets.alarm_text.y
+            )
         end
     end
 end
