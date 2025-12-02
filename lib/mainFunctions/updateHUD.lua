@@ -38,7 +38,7 @@ local isChecking = false
 -- ================================================================
 
 local HUD_CONFIG = {
-    ICON_ID = 34154,  -- ID do ícone (pode ser ajustado)
+    ICON_ID = 34094,  -- ID do ícone (pode ser ajustado)
     X_POSITION = 100,
     Y_POSITION = 100,
     FONT_SIZE = 10,
@@ -222,12 +222,18 @@ local function checkForUpdates()
                 -- Atualiza HUD_CONFIG com os novos valores se encontrados
                 if newIconId then 
                     HUD_CONFIG.ICON_ID = tonumber(newIconId)
-                    -- Atualiza o ícone do HUD se já existir
-                    if updateHUD and updateHUD.setItemId then
+                    -- Atualiza o ícone do HUD se já existir e não estiver destruído
+                    if updateHUD and not updateHUD.destroyed and updateHUD.setItemId then
                         updateHUD:setItemId(HUD_CONFIG.ICON_ID)
                         if Logger then
                             Logger.info(MODULE_NAME, "Ícone do HUD atualizado para ID: %d", HUD_CONFIG.ICON_ID)
+                        else
+                            print("[UPDATE_HUD] Ícone do HUD atualizado para ID: " .. HUD_CONFIG.ICON_ID)
                         end
+                    elseif updateHUD and updateHUD.destroyed then
+                        -- Se o HUD foi destruído, limpa a referência para que seja recriado
+                        updateHUD = nil
+                        updateHUDText = nil
                     end
                 end
                 if updatedText then HUD_CONFIG.UPDATED_TEXT = updatedText end
@@ -247,10 +253,20 @@ local function checkForUpdates()
             print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
         end
         
-        -- Recarrega o script após atualização dos arquivos
-        if Engine and Engine.reloadScript then
+        -- Se apenas o updateHUD.lua foi atualizado, atualiza o ícone sem reload
+        -- Se outros arquivos foram atualizados, faz reload completo
+        local onlyUpdateHUDUpdated = (updatedFiles == 1 and updateHUDWasUpdated)
+        
+        if onlyUpdateHUDUpdated then
+            -- Apenas atualiza o ícone, sem reload
+            if Logger then
+                Logger.info(MODULE_NAME, "Apenas updateHUD.lua foi atualizado. Ícone atualizado sem reload.")
+            else
+                print("[UPDATE_HUD] Apenas updateHUD.lua foi atualizado. Ícone atualizado sem reload.")
+            end
+        elseif Engine and Engine.reloadScript then
+            -- Recarrega o script após atualização dos arquivos
             -- Obtém o nome do script atual
-            -- Tenta obter via debug.getinfo primeiro
             local scriptName = "_TheCrustyHUD 2.0/main.lua"  -- Fallback padrão
             
             local success_getinfo, info = pcall(function()
@@ -345,19 +361,40 @@ end
 -- @param y (number|nil) - Posição Y (opcional)
 -- @return (table) - Tabela com referências aos elementos HUD criados
 function createUpdateHUD(x, y)
-    if updateHUD then
-        if Logger then
-            Logger.debug(MODULE_NAME, "HUD já existe, retornando instância existente")
-        else
-            print("[UPDATE_HUD] HUD já existe, retornando instância existente")
+    -- Verifica se o HUD já existe e não está destruído
+    if updateHUD and not updateHUD.destroyed then
+        -- Atualiza o ícone se necessário (útil após reload)
+        if updateHUD.setItemId then
+            updateHUD:setItemId(HUD_CONFIG.ICON_ID)
+            if Logger then
+                Logger.debug(MODULE_NAME, "HUD já existe, ícone atualizado para ID: %d", HUD_CONFIG.ICON_ID)
+            end
+        end
+        -- Atualiza o texto também
+        if updateHUDText and not updateHUDText.destroyed then
+            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
         end
         return { icon = updateHUD, text = updateHUDText }
+    end
+    
+    -- Se o HUD antigo existe mas está destruído, limpa as referências
+    if updateHUD and updateHUD.destroyed then
+        updateHUD = nil
+        updateHUDText = nil
     end
     
     -- Carrega posição salva ou usa valores padrão
     local hudX, hudY = loadHUDPosition()
     if x then hudX = x end
     if y then hudY = y end
+    
+    -- Log do ICON_ID que será usado
+    if Logger then
+        Logger.info(MODULE_NAME, "Criando HUD com ICON_ID: %d", HUD_CONFIG.ICON_ID)
+    else
+        print("[UPDATE_HUD] Criando HUD com ICON_ID: " .. HUD_CONFIG.ICON_ID)
+    end
     
     -- Cria ícone HUD
     updateHUD = HUD(hudX, hudY, HUD_CONFIG.ICON_ID, true)
