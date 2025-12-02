@@ -24,6 +24,8 @@ local HUD = rawget(_G or {}, "HUD")
 local Game = rawget(_G or {}, "Game")
 local Client = rawget(_G or {}, "Client")
 local Logger = rawget(_G or {}, "Logger")
+local Timer = rawget(_G or {}, "Timer")
+local destroyTimer = rawget(_G or {}, "destroyTimer")
 local BASE_PATH = Engine.getScriptsDirectory() .. "/_TheCrustyHUD 2.0"
 local MODULE_NAME = "UPDATE_HUD"
 
@@ -198,11 +200,16 @@ local function checkForUpdates()
             print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
         end
         
-        -- Restaura texto original após 3 segundos
-        Timer.add(function()
-            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-        end, 3000)
+        -- Restaura texto original após 3 segundos usando Timer
+        local timerName = "updateHUD_restoreText_" .. os.time()
+        local restoreTimer = Timer.new(timerName, function()
+            if updateHUDText then
+                updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
+                updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
+            end
+            -- Destroi o timer após executar uma vez
+            destroyTimer(timerName)
+        end, 3000, true)  -- 3000ms de delay, autoStart = true
     else
         updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
         updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
