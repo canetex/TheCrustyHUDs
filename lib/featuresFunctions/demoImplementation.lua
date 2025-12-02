@@ -97,14 +97,13 @@ local status_alarm = false
 -- ================================================================
 -- Visual Functions
 -- ================================================================
-local function toggle_style_alarm()
+-- Aplica o estilo do alarme baseado no status atual (sem alternar)
+local function apply_alarm_style()
     if not huds.alarm_icon or not huds.alarm_text then
         return
     end
-    -- Alterna o status primeiro
-    status_alarm = not status_alarm
     
-    -- Atualiza o estilo baseado no novo status
+    -- Atualiza o estilo baseado no status atual
     if status_alarm then
         huds.alarm_icon:setOpacity(colors.opacity.active)
         huds.alarm_text:setColor(colors.enabled.r, colors.enabled.g, colors.enabled.b)
@@ -119,6 +118,14 @@ local function toggle_style_alarm()
     huds.bg_alarm:setOpacity(colors.opacity.bg)
     huds.bg_alarm:setSize(sizes.natural, sizes.natural)
     huds.alarm_icon:setSize(sizes.natural, sizes.natural)
+end
+
+-- Alterna o status do alarme e aplica o estilo
+local function toggle_style_alarm()
+    -- Alterna o status primeiro
+    status_alarm = not status_alarm
+    -- Aplica o estilo com o novo status
+    apply_alarm_style()
 end
 
 local function toggle_style(current_status)
@@ -234,7 +241,7 @@ local function init(posParams)
     
     -- Aplica o estilo inicial após criar todos os HUDs
     toggle_style(status)
-    toggle_style_alarm()
+    apply_alarm_style()  -- Aplica estilo inicial do alarme sem alternar
 
     return huds
 end
