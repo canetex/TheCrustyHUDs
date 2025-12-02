@@ -194,6 +194,38 @@ local function checkForUpdates()
     
     -- Atualiza feedback visual
     if hasUpdates and updatedFiles > 0 then
+        -- Recarrega a configuração do arquivo atualizado se o próprio updateHUD.lua foi atualizado
+        local updateHUDWasUpdated = false
+        for _, fileInfo in ipairs(filesToCheck) do
+            if fileInfo.filePath == "lib/mainFunctions/updateHUD.lua" then
+                updateHUDWasUpdated = true
+                break
+            end
+        end
+        
+        -- Se o updateHUD.lua foi atualizado, recarrega a configuração
+        if updateHUDWasUpdated then
+            -- Recarrega o arquivo para obter os novos valores de HUD_CONFIG
+            local updateHUDPath = BASE_PATH .. "/lib/mainFunctions/updateHUD.lua"
+            local file = io.open(updateHUDPath, "r")
+            if file then
+                local content = file:read("*all")
+                file:close()
+                
+                -- Extrai os valores atualizados de HUD_CONFIG usando pattern matching
+                local updatedText = content:match('UPDATED_TEXT%s*=%s*"([^"]+)"')
+                local updateText = content:match('UPDATE_TEXT%s*=%s*"([^"]+)"')
+                local checkingText = content:match('CHECKING_TEXT%s*=%s*"([^"]+)"')
+                local errorText = content:match('ERROR_TEXT%s*=%s*"([^"]+)"')
+                
+                -- Atualiza HUD_CONFIG com os novos valores se encontrados
+                if updatedText then HUD_CONFIG.UPDATED_TEXT = updatedText end
+                if updateText then HUD_CONFIG.UPDATE_TEXT = updateText end
+                if checkingText then HUD_CONFIG.CHECKING_TEXT = checkingText end
+                if errorText then HUD_CONFIG.ERROR_TEXT = errorText end
+            end
+        end
+        
         if updateHUDText then
             updateHUDText:setText(HUD_CONFIG.UPDATED_TEXT)
             updateHUDText:setColor(0, 255, 0)  -- Verde
