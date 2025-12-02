@@ -38,12 +38,12 @@ local isChecking = false
 -- ================================================================
 
 local HUD_CONFIG = {
-    ICON_ID = 34154,  -- ID do ícone (pode ser ajustado)
+    ICON_ID = 34094,  -- ID do ícone (pode ser ajustado)
     X_POSITION = 100,
     Y_POSITION = 100,
     FONT_SIZE = 10,
     TEXT_COLOR = { r = 255, g = 255, b = 255 },
-    UPDATE_TEXT = "Atualizar",
+    UPDATE_TEXT = "Atualizar123",
     CHECKING_TEXT = "Verificando...",
     UPDATED_TEXT = "Atualizado!",
     ERROR_TEXT = "Erro!"
