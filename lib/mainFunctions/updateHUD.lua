@@ -236,6 +236,45 @@ local function checkForUpdates()
             print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
         end
         
+        -- Verifica se o main.lua foi atualizado para recarregar o script
+        local mainWasUpdated = false
+        for _, fileInfo in ipairs(filesToCheck) do
+            if fileInfo.filePath == "main.lua" then
+                mainWasUpdated = true
+                break
+            end
+        end
+        
+        -- Se o main.lua foi atualizado, recarrega o script após um pequeno delay
+        if mainWasUpdated and Engine and Engine.reloadScript then
+            if Logger then
+                Logger.info(MODULE_NAME, "Recarregando script após atualização do main.lua...")
+            else
+                print("[UPDATE_HUD] Recarregando script após atualização do main.lua...")
+            end
+            
+            -- Usa Timer para recarregar após 1 segundo (permite que as atualizações terminem)
+            local reloadTimerName = "updateHUD_reloadScript_" .. os.time()
+            Timer.new(reloadTimerName, function()
+                local scriptName = "_TheCrustyHUD 2.0/main.lua"
+                local success = Engine.reloadScript(scriptName)
+                if success then
+                    if Logger then
+                        Logger.info(MODULE_NAME, "Script recarregado com sucesso!")
+                    else
+                        print("[UPDATE_HUD] Script recarregado com sucesso!")
+                    end
+                else
+                    if Logger then
+                        Logger.warning(MODULE_NAME, "Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                    else
+                        print("[UPDATE_HUD] AVISO: Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                    end
+                end
+                destroyTimer(reloadTimerName)
+            end, 1000, true)  -- 1 segundo de delay, autoStart = true
+        end
+        
         -- Restaura texto original após 3 segundos usando Timer
         local timerName = "updateHUD_restoreText_" .. os.time()
         local restoreTimer = Timer.new(timerName, function()
