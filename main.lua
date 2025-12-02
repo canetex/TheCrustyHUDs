@@ -203,7 +203,7 @@ hudTeste:setDraggable(true)
 hudTeste:setCallback(function()
     if _G.updatePositionsDemoImplementation and type(_G.updatePositionsDemoImplementation) == "function" then
         _G.updatePositionsDemoImplementation({
-            small_icon = {x = 400, y = 400},
+            small_icon = {x = 600, y = 400},
             big_icon = {x = 450, y = 450},
             text = {x = 450, y = 450}
         })
