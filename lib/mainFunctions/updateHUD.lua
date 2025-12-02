@@ -230,22 +230,8 @@ local function checkForUpdates()
                         end
                     end
                 end
-                if updatedText then 
-                    HUD_CONFIG.UPDATED_TEXT = updatedText
-                    if Logger then
-                        Logger.debug(MODULE_NAME, "UPDATED_TEXT atualizado para: %s", updatedText)
-                    end
-                end
-                if updateText then 
-                    HUD_CONFIG.UPDATE_TEXT = updateText
-                    -- Atualiza o texto do HUD imediatamente se já existir
-                    if updateHUDText then
-                        updateHUDText:setText(updateText)
-                        if Logger then
-                            Logger.debug(MODULE_NAME, "Texto do HUD atualizado para: %s", updateText)
-                        end
-                    end
-                end
+                if updatedText then HUD_CONFIG.UPDATED_TEXT = updatedText end
+                if updateText then HUD_CONFIG.UPDATE_TEXT = updateText end
                 if checkingText then HUD_CONFIG.CHECKING_TEXT = checkingText end
                 if errorText then HUD_CONFIG.ERROR_TEXT = errorText end
             end
@@ -360,25 +346,10 @@ end
 -- @return (table) - Tabela com referências aos elementos HUD criados
 function createUpdateHUD(x, y)
     if updateHUD then
-        -- Atualiza o texto do HUD se já existir (útil após reload quando textos mudaram)
-        if updateHUDText then
-            updateHUDText:setText(HUD_CONFIG.UPDATE_TEXT)
-            updateHUDText:setColor(HUD_CONFIG.TEXT_COLOR.r, HUD_CONFIG.TEXT_COLOR.g, HUD_CONFIG.TEXT_COLOR.b)
-            if Logger then
-                Logger.debug(MODULE_NAME, "Texto do HUD atualizado para: %s", HUD_CONFIG.UPDATE_TEXT)
-            end
-        end
-        -- Atualiza o ícone se necessário (útil após reload quando ICON_ID mudou)
-        if updateHUD.setItemId then
-            updateHUD:setItemId(HUD_CONFIG.ICON_ID)
-            if Logger then
-                Logger.debug(MODULE_NAME, "Ícone do HUD atualizado para ID: %d", HUD_CONFIG.ICON_ID)
-            end
-        end
         if Logger then
-            Logger.debug(MODULE_NAME, "HUD já existe, instância atualizada")
+            Logger.debug(MODULE_NAME, "HUD já existe, retornando instância existente")
         else
-            print("[UPDATE_HUD] HUD já existe, instância atualizada")
+            print("[UPDATE_HUD] HUD já existe, retornando instância existente")
         end
         return { icon = updateHUD, text = updateHUDText }
     end
