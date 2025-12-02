@@ -43,10 +43,10 @@ local HUD_CONFIG = {
     Y_POSITION = 100,
     FONT_SIZE = 10,
     TEXT_COLOR = { r = 255, g = 255, b = 255 },
-    UPDATE_TEXT = "Atualizar",
-    CHECKING_TEXT = "Verificando...",
-    UPDATED_TEXT = "Atualizado!",
-    ERROR_TEXT = "Erro!"
+    UPDATE_TEXT = "Atualizar -- 123",
+    CHECKING_TEXT = "Verificando... --312",
+    UPDATED_TEXT = "Atualizado! -- 31222",
+    ERROR_TEXT = "Erro! -- 11"
 }
 
 -- ================================================================
@@ -202,6 +202,47 @@ local function checkForUpdates()
             Logger.info(MODULE_NAME, "%d arquivo(s) atualizado(s) com sucesso!", updatedFiles)
         else
             print("[UPDATE_HUD] " .. updatedFiles .. " arquivo(s) atualizado(s) com sucesso!")
+        end
+        
+        -- Recarrega o script após atualização dos arquivos
+        if Engine and Engine.reloadScript then
+            -- Obtém o nome do script atual usando debug.getinfo
+            local scriptName = nil
+            local success_getinfo, info = pcall(function()
+                return debug.getinfo(1, 'S')
+            end)
+            
+            if success_getinfo and info and info.source then
+                -- Remove o prefixo "@" e "Scripts/" do caminho
+                scriptName = info.source:gsub("^@", ""):gsub("^Scripts/", "")
+            else
+                -- Fallback: usa o caminho relativo conhecido
+                scriptName = "_TheCrustyHUD 2.0/main.lua"
+            end
+            
+            -- Usa Timer para recarregar após 2 segundos (permite que as atualizações terminem e o texto seja exibido)
+            local reloadTimerName = "updateHUD_reloadScript_" .. os.time()
+            Timer.new(reloadTimerName, function()
+                if Logger then
+                    Logger.info(MODULE_NAME, "Recarregando script: %s", scriptName)
+                end
+                
+                local success = Engine.reloadScript(scriptName)
+                if success then
+                    if Logger then
+                        Logger.info(MODULE_NAME, "Script recarregado com sucesso!")
+                    else
+                        print("[UPDATE_HUD] Script recarregado com sucesso!")
+                    end
+                else
+                    if Logger then
+                        Logger.warning(MODULE_NAME, "Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                    else
+                        print("[UPDATE_HUD] AVISO: Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                    end
+                end
+                destroyTimer(reloadTimerName)
+            end, 2000, true)  -- 2 segundos de delay, autoStart = true
         end
         
         -- Restaura texto original após 3 segundos usando Timer
