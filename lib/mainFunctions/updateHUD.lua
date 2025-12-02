@@ -206,18 +206,27 @@ local function checkForUpdates()
         
         -- Recarrega o script após atualização dos arquivos
         if Engine and Engine.reloadScript then
-            -- Obtém o nome do script atual usando debug.getinfo
-            local scriptName = nil
+            -- Obtém o nome do script atual
+            -- Tenta obter via debug.getinfo primeiro
+            local scriptName = "_TheCrustyHUD 2.0/main.lua"  -- Fallback padrão
+            
             local success_getinfo, info = pcall(function()
-                return debug.getinfo(1, 'S')
+                -- Tenta obter de diferentes níveis da stack
+                for level = 1, 10 do
+                    local frameInfo = debug.getinfo(level, 'S')
+                    if frameInfo and frameInfo.source then
+                        local source = frameInfo.source
+                        -- Procura pelo caminho do main.lua do TheCrustyHUD
+                        if source:match("_TheCrustyHUD 2.0/main%.lua") or source:match("TheCrustyHUD.*main%.lua") then
+                            scriptName = source:gsub("^@", ""):gsub("^Scripts/", ""):gsub("\\", "/")
+                            break
+                        end
+                    end
+                end
             end)
             
-            if success_getinfo and info and info.source then
-                -- Remove o prefixo "@" e "Scripts/" do caminho
-                scriptName = info.source:gsub("^@", ""):gsub("^Scripts/", "")
-            else
-                -- Fallback: usa o caminho relativo conhecido
-                scriptName = "_TheCrustyHUD 2.0/main.lua"
+            if Logger then
+                Logger.info(MODULE_NAME, "Preparando para recarregar script: %s", scriptName)
             end
             
             -- Usa Timer para recarregar após 2 segundos (permite que as atualizações terminem e o texto seja exibido)
@@ -225,6 +234,8 @@ local function checkForUpdates()
             Timer.new(reloadTimerName, function()
                 if Logger then
                     Logger.info(MODULE_NAME, "Recarregando script: %s", scriptName)
+                else
+                    print("[UPDATE_HUD] Recarregando script: " .. scriptName)
                 end
                 
                 local success = Engine.reloadScript(scriptName)
@@ -235,10 +246,21 @@ local function checkForUpdates()
                         print("[UPDATE_HUD] Script recarregado com sucesso!")
                     end
                 else
-                    if Logger then
-                        Logger.warning(MODULE_NAME, "Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                    -- Tenta com caminho alternativo
+                    local altScriptName = "main.lua"
+                    local altSuccess = Engine.reloadScript(altScriptName)
+                    if altSuccess then
+                        if Logger then
+                            Logger.info(MODULE_NAME, "Script recarregado com sucesso usando nome alternativo!")
+                        else
+                            print("[UPDATE_HUD] Script recarregado com sucesso usando nome alternativo!")
+                        end
                     else
-                        print("[UPDATE_HUD] AVISO: Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                        if Logger then
+                            Logger.warning(MODULE_NAME, "Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                        else
+                            print("[UPDATE_HUD] AVISO: Não foi possível recarregar o script automaticamente. Recarregue manualmente.")
+                        end
                     end
                 end
                 destroyTimer(reloadTimerName)
