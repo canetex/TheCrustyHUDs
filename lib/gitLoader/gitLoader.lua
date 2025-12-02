@@ -187,21 +187,62 @@ function updateFileFromGitHub(filePath, localPath)
     
     -- Salva o arquivo localmente
     if localPath then
+        -- Tenta abrir o arquivo em modo de escrita (sobrescreve se existir)
         local file = io.open(localPath, "w")
         if file then
+            -- Escreve o conteúdo
             file:write(content)
+            -- Força flush para garantir que o conteúdo seja escrito
+            file:flush()
             file:close()
-            if Logger then
-                Logger.info(MODULE_NAME, "Arquivo atualizado: %s", localPath)
+            
+            -- Verifica se o arquivo foi salvo corretamente lendo-o de volta
+            local verifyFile = io.open(localPath, "r")
+            if verifyFile then
+                local savedContent = verifyFile:read("*all")
+                verifyFile:close()
+                
+                -- Compara o conteúdo salvo com o conteúdo baixado
+                if savedContent == content then
+                    if Logger then
+                        Logger.info(MODULE_NAME, "Arquivo atualizado e verificado: %s", localPath)
+                    else
+                        print("[GIT_LOADER] Arquivo atualizado e verificado: " .. localPath)
+                    end
+                    
+                    -- Salva a versão (SHA) do arquivo atualizado
+                    local remoteSha = checkFileVersion(filePath)
+                    if remoteSha then
+                        local versionFile = io.open(localPath .. ".version", "w")
+                        if versionFile then
+                            versionFile:write(remoteSha)
+                            versionFile:flush()
+                            versionFile:close()
+                        end
+                    end
+                    
+                    return true
+                else
+                    if Logger then
+                        Logger.error(MODULE_NAME, "Erro: Conteúdo do arquivo não corresponde após salvar: %s", localPath)
+                    else
+                        print("[GIT_LOADER] ERRO: Conteúdo do arquivo não corresponde após salvar: " .. localPath)
+                    end
+                    return false
+                end
             else
-                print("[GIT_LOADER] Arquivo atualizado: " .. localPath)
+                if Logger then
+                    Logger.error(MODULE_NAME, "Erro: Não foi possível verificar arquivo salvo: %s", localPath)
+                else
+                    print("[GIT_LOADER] ERRO: Não foi possível verificar arquivo salvo: " .. localPath)
+                end
+                return false
             end
-            return true
         else
             if Logger then
-                Logger.error(MODULE_NAME, "Erro ao salvar arquivo: %s", localPath)
+                Logger.error(MODULE_NAME, "Erro ao abrir arquivo para escrita: %s", localPath)
             else
-                print("[GIT_LOADER] Erro ao salvar arquivo: " .. localPath)
+                print("[GIT_LOADER] Erro ao abrir arquivo para escrita: " .. localPath)
             end
             return false
         end

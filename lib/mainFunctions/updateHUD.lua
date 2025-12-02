@@ -187,6 +187,30 @@ local function checkForUpdates()
                     else
                         print("[UPDATE_HUD] Arquivo atualizado: " .. fileInfo.filePath)
                     end
+                    
+                    -- Verifica se o arquivo foi realmente atualizado lendo uma amostra
+                    local verifyFile = io.open(fileInfo.localPath, "r")
+                    if verifyFile then
+                        local firstLines = ""
+                        for i = 1, 5 do
+                            local line = verifyFile:read("*line")
+                            if line then
+                                firstLines = firstLines .. line .. "\n"
+                            else
+                                break
+                            end
+                        end
+                        verifyFile:close()
+                        if Logger then
+                            Logger.debug(MODULE_NAME, "Primeiras linhas do arquivo atualizado %s:\n%s", fileInfo.filePath, firstLines)
+                        end
+                    end
+                else
+                    if Logger then
+                        Logger.warning(MODULE_NAME, "Falha ao atualizar arquivo: %s", fileInfo.filePath)
+                    else
+                        print("[UPDATE_HUD] AVISO: Falha ao atualizar arquivo: " .. fileInfo.filePath)
+                    end
                 end
             end
         end
