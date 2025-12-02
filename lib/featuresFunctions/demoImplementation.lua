@@ -187,5 +187,62 @@ local function init(posParams)
     return huds
 end
 
--- Exporta a função init para uso externo
+-- Complexidade: O(1) - atualização de posições dos HUDs
+-- Atualiza as posições dos HUDs existentes
+-- @param posParams (table|nil) - Tabela opcional com novas posições:
+--   - small_icon: {x = number, y = number}
+--   - big_icon: {x = number, y = number}
+--   - text: {x = number, y = number}
+local function updatePositions(posParams)
+    if not posParams then
+        return
+    end
+    
+    -- Atualiza as posições na tabela
+    if posParams.small_icon then
+        positions.small_icon = posParams.small_icon
+    end
+    if posParams.big_icon then
+        positions.big_icon = posParams.big_icon
+    end
+    if posParams.text then
+        positions.text = posParams.text
+    end
+    
+    -- Reposiciona os HUDs existentes
+    if huds.small_icon and positions.small_icon then
+        huds.small_icon:setPos(positions.small_icon.x, positions.small_icon.y)
+        if huds.bg_small_icon then
+            huds.bg_small_icon:setPos(positions.small_icon.x, positions.small_icon.y)
+        end
+    end
+    
+    if huds.big_icon and positions.big_icon then
+        huds.big_icon:setPos(positions.big_icon.x, positions.big_icon.y)
+        if huds.bg_big_icon then
+            huds.bg_big_icon:setPos(positions.big_icon.x, positions.big_icon.y)
+        end
+    end
+    
+    if huds.text and positions.text then
+        -- Reposiciona o texto principal
+        huds.text:setPos(
+            positions.text.x + relative_offsets.text.x, 
+            positions.text.y + relative_offsets.text.y
+        )
+        
+        -- Reposiciona os backgrounds do texto
+        for i = 1, text_bg_repeats do
+            if huds.bg_text[i] then
+                huds.bg_text[i]:setPos(
+                    positions.text.x + relative_offsets.textbg.x + (i-1) * sizes.natural,
+                    positions.text.y + relative_offsets.textbg.y
+                )
+            end
+        end
+    end
+end
+
+-- Exporta as funções para uso externo
 _G.initDemoImplementation = init
+_G.updatePositionsDemoImplementation = updatePositions

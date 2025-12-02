@@ -198,5 +198,17 @@ end
 -- Executa inicialização
 initialize()
 
+local hudTeste = HUD.new(400,400,3108,true)
+hudTeste:setDraggable(true)
+hudTeste:setCallback(function()
+    if _G.updatePositionsDemoImplementation and type(_G.updatePositionsDemoImplementation) == "function" then
+        _G.updatePositionsDemoImplementation({
+            small_icon = {x = 400, y = 400},
+            big_icon = {x = 450, y = 450},
+            text = {x = 450, y = 450}
+        })
+    end
+end)
+
 print("[" .. SCRIPT_NAME .. "] Carregado com sucesso!\n")
 
