@@ -43,8 +43,8 @@ local HUD_CONFIG = {
     Y_POSITION = 100,
     FONT_SIZE = 10,
     TEXT_COLOR = { r = 255, g = 255, b = 255 },
-    UPDATE_TEXT = "Atualizar",
-    CHECKING_TEXT = "Verificando...",
+    UPDATE_TEXT = "Atualizar!!!",
+    CHECKING_TEXT = "Verificando...1",
     UPDATED_TEXT = "Atualizado!",
     ERROR_TEXT = "Erro!"
 }
